@@ -1,0 +1,149 @@
+A simple name server for OS/2
+=============================
+
+Introduction
+------------
+This package contains a very simple domain name server for OS/2.  It is
+intended primarily for small networks which access the Internet via a
+dialup connection (where another, real name server will also be used). 
+
+The name database is, simply, the HOSTS file normally used by the OS/2
+name resolution library.  However, if the dialup connection is active,
+then another name server (typically that at the ISP) can be consulted as
+well. 
+
+There are other, more sophisticated, name server programs available;
+this one is, however, small, fast and free!
+
+How does name resolution work?
+------------------------------
+Normally, OS/2 does name resolution by consulting a set of name servers
+(specified via the RESOLV2 file) and/or by looking at a static list of
+hosts in the HOSTS file.  By default, the name server is consulted
+first, but this means that a different RESOLV2 file is needed when the
+dialup connection is not active.  This search order can be overridden by
+putting:
+
+          SET USE_HOSTS_FIRST=1
+
+in CONFIG.SYS, but it is more convenient to use a small local server
+that can pass on queries to another name server if it is available. 
+This eliminates tiresome delays waiting for timeouts. 
+
+Setting up the server
+=====================
+Installation and setting up of the server is very easy.
+
+Step 1
+------
+Copy the program files into place.  Copy NAMED.EXE to any suitable
+directory; it is convenient if this directory is on the PATH.  Also,
+copy NETLIB.DLL to a directory that is on the LIBPATH. 
+
+Step 2
+------
+Locate the ETC directory used by TCP/IP.  If you don't know the location
+of this directory, type the command:
+
+          SET ETC
+
+at an OS/2 command prompt.  You need to create one file in this
+directory.  We'll call this the ETC directory from now on. 
+
+Step 3
+------
+Create the NAMED configuration file.  This must be called NAMED.CNF, and
+must reside in the ETC directory. 
+
+The format of the configuration file is very simple.  Items within lines
+are separated by any number of space or tab characters (as long as there
+is at least one).  Anything on a line after (and including) a '#'
+character is ignored.  Each line starts with a command, followed by
+parameters which depend on the command.  Commands are as below: items in <>
+indicate values to be inserted. Commands don't have to be in upper case.
+
+PORT    <portnumber>
+	This indicates the port on which NAMED should listen. Normally, this
+	command can be omitted, and the default DNS port number derived from
+	the SERVICES file in the ETC directory will be used.
+
+AUTH_NETWORK   <network-ip-address>
+	Specifies the IP address (as a dotted quad) of the local network,
+	for which the name server is to provide answers. This is used
+	for seeing if answers can be provided for reverse lookups.
+	It is used in conjunction with AUTH_NETMASK (see below).
+
+AUTH_NETMASK   <network-mask>
+	This mask (expressed as a dotted quad) is used to mask IP addresses
+	which are the subject of reverse lookups, before seeing if they
+	match the network address given by AUTH_NETWORK. In most cases,
+	where a class C network is being used, the last number in
+	AUTH_NETWORK is zero, and AUTH_NETMASK is 255.255.255.0 so that
+	only the network part is compared.
+
+AUTH_DOMAIN   <domain-name>
+	This gives the domain for which the DNS gives its own authoritative
+	answers; use the domain for your local network. This will be the same
+	as the one in your RESOLV2 file.
+
+REFER_INTERFACE    <interface-name>
+	This gives the name of the dialup interface (e.g. sl0 for SLIP).
+	If this interface exists and is marked as UP, then names that
+	cannot be resolved locally will be passed on to the name server
+	provided by the 'other' end of this interface.
+
+REFER_SERVERS     <network-ip> <network-mask> <name-server1> <name-server2>
+	This is a bit complicated. It handles the fact that the dialup
+	may not always be to the same ISP, and for each ISP there will be
+	different name server addresses.
+	The 'network-ip' is the network address of the ISP; essentially, as
+	much as possible of any IP address that will be handed out as a
+	dynamic IP address. The 'network-mask' is used to mask the actual
+	address of the 'refer interface'; if the masked value matches the
+	'network-ip', then the name servers given on the rest of the line
+	are consulted in turn. There may be as many as desired although only
+	two are shown above. If the values don't match, none of the specified
+	name servers are consulted.
+	This configuration statement can appear more than once, and each is
+	tried in turn until there is a match for 'network-ip'.
+
+A sample NAMED.CNF is included with the package.  This MUST NOT be used
+in its current form; edit to suit your local environment.
+
+Step 5
+------
+Start the server. The easiest way is to issue the command:
+
+	START "Name Server" /MIN /N NAMED
+
+This starts the program minimised, in a VIO window, and it will appear in the
+Window List with a meaningful name.
+
+To start the server automatically at every boot, add the above command
+to the \TCPIP\BIN\TCPEXIT.CMD file.  If that file doesn't exist, create
+it, containing just the above line. 
+
+Logging
+-------
+The server maintains a logfile in the ETC directory, under the name
+NAMED.LOG.  This file will grow without bound unless regularly pruned;
+its use is really limited to debugging.  It could be deleted or renamed
+in TCPEXIT.CMD, just before starting the program. 
+
+That's all there is to starting the server.
+
+History
+=======
+1.0	Initial version.
+1.1	Added version number to startup message.
+	Grouped initialisation code together.
+1.2	Fix exceptions on referral socket.
+1.3	Fix problem with getting IP address on non
+	point to point interfaces.
+1.4	Corrected handling of part line comments in config file.
+
+
+Bob Eager
+rde@tavi.co.uk
+August 2000
+

@@ -1,0 +1,29 @@
+#
+# local network address
+#
+auth_network        192.168.42.0
+#
+# mask for local addresses
+#
+auth_netmask        255.255.255.0
+#
+# local domain name
+#
+auth_domain         abc.xyz.com
+#
+# interface that must be up if name requests are to be referred on
+#
+refer_interface     sl0
+#
+# name server addresses for ISP 1
+# (if address associated with sl0 is 192.168.33.x, where x is anything,
+# use nameserver 192.168.33.47
+#
+refer_servers       192.168.33.0  255.255.255.0     192.168.33.47
+#
+# name server addresses for ISP 2
+# (if address associated with sl0 is 192.168.32.11 (static address),
+# use nameserver 192.168.32.7, then 192.168.32.3
+#
+refer_servers       192.168.32.11 255.255.255.255 192.168.32.7 192.168.32.3
+
